@@ -1,0 +1,102 @@
+---
+title: "Efficiency of Automatic and Manual transmission cars"
+author: "Ivan Jennings"
+date: "22/03/2021"
+output:
+  pdf_document: default
+  word_document: default
+  html_document:
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Excecutive summary
+This study will explore efficiency of automatic and manual transmission cars and quantify the difference if any. We will utilize the built in R data set "mtcars" which includes efficiency data in miles per gallon (MPG). We will attempt to answer the questions “Is an automatic or manual transmission better for MPG” and "Quantify the MPG difference between automatic and manual transmissions"
+
+### Load data
+First we will load any nescessary libraries. Because mtcars is a built in data set, we don't need to load in the data to R.
+```{r load libraries, message = FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+### Explore data
+Let's take a look at our data set with a few basic functions - head() and str(). Looking at figure 1 (see appendix) we have 32 observations of 11 variables. Let's take a quick look at the mpg data plotted for both transmission types in figure 2.
+
+Figure 2
+```{r basic plot without echo, echo = FALSE, fig.dim = c(3, 3)}
+ggplot(data=mtcars, aes(factor(am),mpg)) +
+  geom_boxplot() +
+  xlab("Transmission") +
+  ylab("Fuel Efficiency (MPG)") +
+  scale_x_discrete(breaks=c("0","1"),
+        labels=c("Automatic", "Manual"))
+```
+
+Based on the plot figure in figure 2, we can see that on average manual transmission cars have higher fuel efficiency (e.g. higher MPG value). Let's run a T Test as we have a total of 32 samples to confirm if this difference is significant.
+
+We can see that in figure 3, 0 is not included in the 95% sample and the p-value at 0.001 (rounded to 3 decimal places) which is much lower than 0.05, however we will need to also find out if we have any confounding variables that are contributing to this difference. For example, if most manual transmission cars are lower weight and most automatic cars are heavier, then weight could be the actual cause rather than transmission.
+
+### Modelling
+Now that we have a good idea of what our data looks like, let's try to create a model that will be able to help us understand the relationship between transmission and fuel efficiency. First let's look at a simple linear model with MPG as the outcome and transmission as the predictor.
+
+Looking at the R-squared value of 0.360 in figure 4, this shows that our model accounts for approximately 36.0% of the variation. Let's add the other variables which we have in the mtcars data set and use the anova function to determine the best model.
+
+Based upon the anova test in figure 5, it looks like model 3 (fit3) has the best fit without adding too many variables and inflating the model. Let's take a look at the summary of model three as well.
+
+We can see that this model in figure 6 our third model (fit3) explains 85% of the total variation with a low P-value for each variable as well as the overall model. Let's take a look as well at some of the diagnostic plots as well to see if our model is a good fit.
+
+We can see in figure 7 some variation in the residuals, however overall this model fits the data.
+
+### Conclusion
+
+Based on the analysis above, we can say that on average the transmission of a car is a significant factor and manual transmission on a car increases the efficiency by approximately 2.9 MPG with standard error of 1.4 removing the effects of weight and acceleration. There is an additional 16.3% of variance which is not explained by the model that we used.
+
+Please note that all values have been rounded to 2 decimal places unless otherwise noted.
+
+### Appendix
+
+Figure 1
+```{r explore}
+head(mtcars)
+str(mtcars)
+```
+Figure 2
+```{r basic plot}
+ggplot(data=mtcars, aes(factor(am),mpg)) +
+  geom_boxplot() +
+  xlab("Transmission") +
+  ylab("Fuel Efficiency (MPG)") +
+  scale_x_discrete(breaks=c("0","1"),
+        labels=c("Automatic", "Manual")) +
+  labs(title = "Distribution of efficiency by transmission")
+```
+Figure 3
+```{r significant}
+t.test(mtcars$mpg[mtcars$am==1],mtcars$mpg[mtcars$am==0])
+```
+Figure 4
+```{r simple linear}
+fit0 <- lm(mpg~factor(am),mtcars)
+summary(fit0)
+```
+Figure 5
+```{r multiple linear}
+fit1 <- lm(mpg ~ factor(am), mtcars) 
+fit2 <- lm(mpg ~ factor(am) + wt, mtcars) 
+fit3 <- lm(mpg ~ factor(am) + wt + qsec, mtcars) 
+fit4 <- lm(mpg ~ factor(am) + wt + qsec + disp, mtcars) 
+fit5 <- lm(mpg ~ . , mtcars)
+anova(fit1, fit2, fit3, fit4, fit5)
+```
+Figure 6
+```{r final linear}
+summary(fit3)
+```
+Figure 7
+```{r diag}
+par(mfcol = c(2,2))
+plot(fit3)
+```
